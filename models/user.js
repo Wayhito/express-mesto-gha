@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 
 const validator = require('validator');
 
@@ -39,25 +39,25 @@ const userSchema = new Schema(
 
   {
     versionKey: false,
-    // statics: {
-    //   findUserByCredentials(email, password) {
-    //     return this
-    //       .findOne({ email })
-    //       .select('+password')
-    //       .then((user) => {
-    //         if (user) {
-    //           return bcrypt.compare(password, user.password)
-    //             .then((matched) => {
-    //               if (matched) return user;
+    statics: {
+      findUserByCredentials(email, password) {
+        return this
+          .findOne({ email })
+          .select('+password')
+          .then((user) => {
+            if (user) {
+              return bcrypt.compare(password, user.password)
+                .then((matched) => {
+                  if (matched) return user;
 
-    //               return Promise.reject();
-    //             });
-    //         }
+                  return Promise.reject();
+                });
+            }
 
-    //         return Promise.reject();
-    //       });
-    //   },
-    // },
+            return Promise.reject();
+          });
+      },
+    },
   },
 );
 

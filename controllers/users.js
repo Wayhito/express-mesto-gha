@@ -23,44 +23,37 @@ function registerUser(req, res, next) {
       about,
       avatar,
     }))
+    .then((user) => {
+      const { _id } = user;
 
-    .then((newUser) => {
-      if (!newUser) {
-        return next(new NotFoundError('Объект не найден'));
-      } return res.send({
-        name: newUser.name,
-        about: newUser.about,
-        avatar: newUser.avatar,
-        email: newUser.email,
-        _id: newUser._id,
+      return res.status(201).send({
+        email,
+        name,
+        about,
+        avatar,
+        _id,
       });
     })
-
     .catch(next);
 }
 
 function loginUser(req, res, next) {
   const { email, password } = req.body;
 
-  User.findOne({ email }).select('+password')
-    .then((user) => {
-      if (user === null) {
-        throw new UnauthorizedError('Неправильная почта или пароль');
-      } return bcrypt.compare(password, user.password)
+  User
+    .findUserByCredentials(email, password)
+    .then(({ _id: userId }) => {
+      if (userId) {
+        const token = jwt.sign(
+          { userId },
+          'secretkey',
+          { expiresIn: '7d' },
+        );
 
-        .then((matched) => {
-          if (!matched) {
-            throw new UnauthorizedError('Неправильная почта или пароль');
-          } const token = jwt.sign({ _id: user._id }, 'secretkey', { expiresIn: '7d' });
+        return res.status(200).send({ _id: token });
+      }
 
-          res.cookie('jwt', token, { maxAge: 3600000 * 7, httpOnly: true, sameSite: true }).send({
-            name: user.name,
-            about: user.about,
-            avatar: user.avatar,
-            email: user.email,
-            _id: user._id,
-          });
-        });
+      throw new UnauthorizedError('Неправильные почта или пароль');
     })
     .catch(next);
 }
