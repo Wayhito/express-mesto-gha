@@ -23,9 +23,9 @@ function registerUser(req, res, next) {
       about,
       avatar,
     }))
-
     .then((user) => {
       const { _id } = user;
+
       return res.status(201).send({
         email,
         name,
@@ -34,7 +34,6 @@ function registerUser(req, res, next) {
         _id,
       });
     })
-
     .catch(next);
 }
 
@@ -43,8 +42,6 @@ function loginUser(req, res, next) {
 
   User
     .findUserByCredentials(email, password)
-
-    // Создаем токен
     .then(({ _id: userId }) => {
       if (userId) {
         const token = jwt.sign(
@@ -58,7 +55,6 @@ function loginUser(req, res, next) {
 
       throw new UnauthorizedError('Неправильные почта или пароль');
     })
-
     .catch(next);
 }
 
@@ -74,13 +70,11 @@ function getUserInfo(req, res, next) {
 
   User
     .findById(id)
-
     .then((user) => {
       if (user) return res.status(200).send({ user });
 
       throw new NotFoundError('Данные по указанному id не найдены');
     })
-
     .catch(next);
 }
 
@@ -89,13 +83,11 @@ function getCurrentUserInfo(req, res, next) {
 
   User
     .findById(userId)
-
     .then((user) => {
       if (user) return res.status(200).send({ user });
 
       throw new NotFoundError('Данные по указанному id не найдены');
     })
-
     .catch(next);
 }
 
@@ -115,13 +107,11 @@ function setUserInfo(req, res, next) {
         runValidators: true,
       },
     )
-
     .then((user) => {
       if (user) return res.status(200).send({ user });
 
       throw new NotFoundError('Данные по указанному id не найдены');
     })
-
     .catch(next);
 }
 
@@ -140,13 +130,11 @@ function setUserAvatar(req, res, next) {
         runValidators: true,
       },
     )
-
     .then((user) => {
       if (user) return res.status(200).send({ user });
 
       throw new NotFoundError('Данные по указанному id не найдены');
     })
-
     .catch(next);
 }
 
