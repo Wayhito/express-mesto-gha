@@ -3,7 +3,7 @@ const { celebrate, Joi } = require('celebrate');
 
 const { users } = require('./users');
 const { cards } = require('./cards');
-const { login, createUser } = require('../controllers/users');
+const { loginUser, registerUser } = require('../controllers/users');
 const { auth } = require('../middlewares/auth');
 const { NotFoundError } = require('../errors/NotFound');
 
@@ -22,7 +22,7 @@ routes.post(
       avatar: Joi.string().regex(/https?:\/\/(www)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]+#?$/i),
     }),
   }),
-  createUser,
+  registerUser,
 );
 
 routes.post(
@@ -33,7 +33,7 @@ routes.post(
       password: Joi.string().required(),
     }),
   }),
-  login,
+  loginUser,
 );
 
 routes.use('/users', auth, users);
