@@ -6,29 +6,27 @@ const NotFoundError = require('../errors/NotFound');
 
 const User = require('../models/user');
 
-function registerUser(req, res, next) {
-  const {
-    email,
-    password,
-    name,
-    about,
-    avatar,
-  } = req.body;
+async function registerUser(req, res, next) {
+  try {
+    const {
+      email, password, name, about, avatar,
+    } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
 
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
+    let user = await User.create({
       email,
-      password: hash,
+      password: passwordHash,
       name,
       about,
       avatar,
-    }))
+    });
 
-    .then((user) => {
-      res.send(user);
-    })
-
-    .catch(next);
+    user = user.toObject();
+    delete user.password;
+    res.status(201).send(user);
+  } catch (err) {
+    next(err);
+  }
 }
 
 async function loginUser(req, res, next) {

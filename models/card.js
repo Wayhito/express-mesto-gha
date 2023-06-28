@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const { ObjectId } = mongoose.Schema.Types;
+// const { ObjectId } = mongoose.Schema.Types;
 const validator = require('validator');
 
 const cardSchema = new Schema(
@@ -14,20 +14,26 @@ const cardSchema = new Schema(
     link: {
       type: String,
       required: true,
-      validate: { validator: (v) => validator.isURL(v) },
+      validate: {
+        validator: validator.isURL,
+      },
     },
 
     owner: {
-      type: ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
       required: true,
     },
 
-    likes: [{
-      type: ObjectId,
-      ref: 'user',
+    likes: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'user',
+        },
+      ],
       default: [],
-    }],
+    },
 
     createdAt: {
       type: Date,
