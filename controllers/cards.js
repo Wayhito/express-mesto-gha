@@ -11,7 +11,7 @@ async function createCard(req, res, next) {
     const card = await Card.create({ name, link, owner: ownerId });
     res.status(201).send(card);
   } catch (err) {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') {
       next(new ValidationError('Неверные данные в запросе'));
       return;
     }
@@ -63,7 +63,7 @@ async function dislikeCard(req, res, next) {
 
     res.send(card);
   } catch (err) {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') {
       next(new ValidationError('Неверные данные в запросе'));
       return;
     }

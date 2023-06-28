@@ -27,7 +27,7 @@ async function registerUser(req, res, next) {
     delete user.password;
     res.status(201).send(user);
   } catch (err) {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') {
       next(new ValidationError('Неверные данные в  запросе'));
       return;
     }
@@ -138,7 +138,7 @@ async function setUserAvatar(req, res, next) {
     const user = await User.findByIdAndUpdate(
       userId,
       { avatar },
-      { new: true },
+      { new: true, runValidators: true },
     );
 
     if (!user) {
