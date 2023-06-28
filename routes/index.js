@@ -5,7 +5,7 @@ const { users } = require('./users');
 const { cards } = require('./cards');
 const { loginUser, registerUser } = require('../controllers/users');
 const { auth } = require('../middlewares/auth');
-const { NotFoundError } = require('../errors/NotFound');
+const NotFoundError = require('../errors/NotFound');
 
 const routes = express.Router();
 
