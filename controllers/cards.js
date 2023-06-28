@@ -2,6 +2,7 @@ const Card = require('../models/card');
 
 const ForbiddenError = require('../errors/Forbidden');
 const NotFoundError = require('../errors/NotFound');
+const ValidationError = require('../errors/Validation');
 
 async function createCard(req, res, next) {
   try {
@@ -10,6 +11,11 @@ async function createCard(req, res, next) {
     const card = await Card.create({ name, link, owner: ownerId });
     res.status(201).send(card);
   } catch (err) {
+    if (err.name === 'CastError' || err.name === 'ValidationError') {
+      next(new ValidationError('Неверные данные в запросе'));
+      return;
+    }
+
     next(err);
   }
 }

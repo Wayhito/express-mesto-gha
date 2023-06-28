@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const ValidationError = require('../errors/Validation');
+const ConflictError = require('../errors/ConflictError');
 const UnauthorizedError = require('../errors/Unauthorized');
 const NotFoundError = require('../errors/NotFound');
 
@@ -25,6 +27,15 @@ async function registerUser(req, res, next) {
     delete user.password;
     res.status(201).send(user);
   } catch (err) {
+    if (err.name === 'CastError' || err.name === 'ValidationError') {
+      next(new ValidationError('Неверные данные в  запросе'));
+      return;
+    }
+    if (err.code === 11000) {
+      next(new ConflictError('Пользователь с таким email уже существует'));
+      return;
+    }
+
     next(err);
   }
 }
