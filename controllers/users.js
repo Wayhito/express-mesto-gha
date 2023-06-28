@@ -23,119 +23,123 @@ function registerUser(req, res, next) {
       about,
       avatar,
     }))
+
     .then((user) => {
-      const { _id } = user;
-
-      return res.status(201).send({
-        email,
-        name,
-        about,
-        avatar,
-        _id,
-      });
+      res.send(user);
     })
+
     .catch(next);
 }
 
-function loginUser(req, res, next) {
-  const { email, password } = req.body;
+async function loginUser(req, res, next) {
+  try {
+    const { email, password } = req.body;
 
-  User
-    .findUserByCredentials(email, password)
-    .then(({ _id: userId }) => {
-      if (userId) {
-        const token = jwt.sign(
-          { userId },
-          'secretkey',
-          { expiresIn: '7d' },
-        );
+    const user = await User.findOne({ email }).select('+password');
 
-        return res.status(200).send({ _id: token });
-      }
+    if (!user) {
+      throw new UnauthorizedError('Неверные данные для входа');
+    }
 
-      throw new UnauthorizedError('Неправильные почта или пароль');
-    })
-    .catch(next);
+    const hasRightPassword = await bcrypt.compare(password, user.password);
+
+    if (!hasRightPassword) {
+      throw new UnauthorizedError('Неверные данные для входа');
+    }
+
+    const token = jwt.sign(
+      {
+        _id: user._id,
+      },
+      'secretkey',
+      {
+        expiresIn: '7d',
+      },
+    );
+
+    res.send({ jwt: token });
+  } catch (err) {
+    next(err);
+  }
 }
 
-function getUsersInfo(_, res, next) {
-  User
-    .find({})
-    .then((users) => res.status(200).send({ users }))
-    .catch(next);
+async function getUsersInfo(_, res, next) {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function getUserInfo(req, res, next) {
-  const { id } = req.params;
+async function getUserInfo(req, res, next) {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
 
-  User
-    .findById(id)
-    .then((user) => {
-      if (user) return res.status(200).send({ user });
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
 
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-    .catch(next);
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function getCurrentUserInfo(req, res, next) {
-  const { userId } = req.user;
+async function getCurrentUserInfo(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
 
-  User
-    .findById(userId)
-    .then((user) => {
-      if (user) return res.status(200).send({ user });
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
 
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-    .catch(next);
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function setUserInfo(req, res, next) {
-  const { name, about } = req.body;
-  const { userId } = req.user;
-
-  User
-    .findByIdAndUpdate(
+async function setUserInfo(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const { name, about } = req.body;
+    const user = await User.findByIdAndUpdate(
       userId,
-      {
-        name,
-        about,
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    )
-    .then((user) => {
-      if (user) return res.status(200).send({ user });
+      { name, about },
+      { new: true, runValidators: true },
+    );
 
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-    .catch(next);
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function setUserAvatar(req, res, next) {
-  const { avatar } = req.body;
-  const { userId } = req.user;
-
-  User
-    .findByIdAndUpdate(
+async function setUserAvatar(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const { avatar } = req.body;
+    const user = await User.findByIdAndUpdate(
       userId,
-      {
-        avatar,
-      },
-      {
-        new: true,
-        runValidators: true,
-      },
-    )
-    .then((user) => {
-      if (user) return res.status(200).send({ user });
+      { avatar },
+      { new: true },
+    );
 
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-    .catch(next);
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
 }
 
 module.exports = {

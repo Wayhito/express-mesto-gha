@@ -3,97 +3,87 @@ const Card = require('../models/card');
 const ForbiddenError = require('../errors/Forbidden');
 const NotFoundError = require('../errors/NotFound');
 
-function createCard(req, res, next) {
-  const { name, link } = req.body;
-  const { userId } = req.user;
-
-  Card
-    .create({ name, link, owner: userId })
-    .then((card) => res.status(201).send({ data: card }))
-    .catch(next);
+async function createCard(req, res, next) {
+  try {
+    const { name, link } = req.body;
+    const ownerId = req.user._id;
+    const card = await Card.create({ name, link, owner: ownerId });
+    res.status(201).send(card);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function receiveCards(_, res, next) {
-  Card
-    .find({})
-    .populate(['owner', 'likes'])
-    .then((cards) => res.status(200).send({ data: cards }))
-    .catch(next);
+async function receiveCards(_, res, next) {
+  try {
+    const cards = await Card.find({});
+    res.send(cards);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function likeCard(req, res, next) {
-  const { cardId } = req.params;
-  const { userId } = req.user;
+async function likeCard(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: userId } },
+      { new: true },
+    );
 
-  Card
-    .findByIdAndUpdate(
-      cardId,
-      {
-        $addToSet: {
-          likes: userId,
-        },
-      },
-      {
-        new: true,
-      },
-    )
+    if (!card) {
+      throw new NotFoundError('Карточка не найдена');
+    }
 
-    .then((card) => {
-      if (card) return res.status(200).send({ data: card });
-
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-
-    .catch(next);
+    res.send(card);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function dislikeCard(req, res, next) {
-  const { cardId } = req.params;
-  const { userId } = req.user;
+async function dislikeCard(req, res, next) {
+  try {
+    const userId = req.user._id;
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: userId } },
+      { new: true },
+    );
 
-  Card
-    .findByIdAndUpdate(
-      cardId,
-      {
-        $pull: {
-          likes: userId,
-        },
-      },
-      {
-        new: true,
-      },
-    )
+    if (!card) {
+      throw new NotFoundError('Карточка не найдена');
+    }
 
-    .then((card) => {
-      if (card) return res.status(200).send({ data: card });
-
-      throw new NotFoundError('Данные по указанному id не найдены');
-    })
-
-    .catch(next);
+    res.send(card);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function deleteCard(req, res, next) {
-  const { id: cardId } = req.params;
-  const { userId } = req.user;
+async function deleteCard(req, res, next) {
+  try {
+    const { cardId } = req.params;
 
-  Card
-    .findById({
-      _id: cardId,
-    })
+    const card = await Card.findById(cardId).populate('owner');
 
-    .then((card) => {
-      if (!card) throw new NotFoundError('Данные по указанному id не найдены');
+    if (!card) {
+      throw new NotFoundError('Карточка не найдена');
+    }
 
-      const { owner: cardOwnerId } = card;
-      if (cardOwnerId.valueOf() !== userId) throw new ForbiddenError('Нет прав доступа');
+    const ownerId = card.owner.id;
+    const userId = req.user._id;
 
-      card
-        .remove()
-        .then(() => res.status(200).send({ data: card }));
-    })
+    if (ownerId !== userId) {
+      throw new ForbiddenError('Нельзя удалить чужую карточку');
+    }
 
-    .catch(next);
+    await Card.findByIdAndRemove(cardId);
+
+    res.send(card);
+  } catch (err) {
+    next(err);
+  }
 }
 
 module.exports = {
