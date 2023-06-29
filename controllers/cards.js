@@ -63,7 +63,7 @@ async function dislikeCard(req, res, next) {
 
     res.send(card);
   } catch (err) {
-    if (err.name === 'ValidationError') {
+    if (err.name === 'CastError') {
       next(new ValidationError('Неверные данные в запросе'));
       return;
     }

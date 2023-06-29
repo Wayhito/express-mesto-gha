@@ -13,7 +13,7 @@ const {
 
 const paramsValidationConfig = {
   params: Joi.object().keys({
-    cardId: Joi.string().custom(validateObjectId),
+    cardId: Joi.string().required().custom(validateObjectId),
   }),
 };
 
