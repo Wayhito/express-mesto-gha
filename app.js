@@ -4,6 +4,8 @@ const { errors } = require('celebrate');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+
 const { routes } = require('./routes');
 const { handleError } = require('./middlewares/handleError');
 
@@ -29,10 +31,16 @@ mongoose
 
 app.use(limiter);
 
+// Логгер запросов
+app.use(requestLogger);
+
 app.use(helmet());
 
 app.use(routes);
 
+app.use(errorLogger);
+
+// Логгер ошибок
 app.use(errors());
 
 app.use(handleError);
